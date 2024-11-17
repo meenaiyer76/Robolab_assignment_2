@@ -88,7 +88,8 @@ class HammingCode:
     def encode(self, source_word: Tuple[int, ...]) -> Tuple[int, ...]:
         source_word = list(source_word)
         encoded_word = []
-
+        if len(source_word) != self.data_bits:
+            raise ValueError("Enter a valid input code word")
         # Perform the matrix multiplication with the generator matrix G
         for i in range(len(self.g[0])):  # Iterate over the rows of G
             bs = 0
@@ -104,7 +105,10 @@ class HammingCode:
     def decode(self, encoded_word: Tuple[int, ...]) -> Tuple[Union[None, Tuple[int, ...]], HCResult]:
         d_and_p_bts = encoded_word[:-1]
         even_org_pbit = encoded_word[-1]
-        print(even_org_pbit)
+
+        if len(encoded_word) != self.total_bits+1:
+            raise ValueError("Enter a valid input code word")
+
         # to Calculate expected even parity for d_and_p_bts (10 bits)
         even_parity = sum(d_and_p_bts) % 2
         parity_check = even_parity == even_org_pbit
@@ -114,6 +118,7 @@ class HammingCode:
         # print(H)
         for i in range(len(self.h)):
             syndrome[i] = sum(d_and_p_bts[j] * self.h[i][j] for j in range(self.total_bits)) % 2
+        # initialise syndrome value to total no. of digits in encoded word
         syndrome_value = 11
         # Convert syndrome to a decimal value to identify any single-bit error location
         for i in range(0,self.total_bits):
@@ -121,16 +126,18 @@ class HammingCode:
             if column == tuple(syndrome):
                 syndrome_value = i
                 break
+
         if sum(syndrome) == 0:
             syndrome_value=0
-        print(syndrome)
-        print(syndrome_value)
+
+        #print(syndrome)
+        #print(syndrome_value)
         if syndrome_value == 0:
             # No error detected
-            #if parity_check:
+            if parity_check:
               return tuple(d_and_p_bts[:self.data_bits]), HCResult.VALID
-            #else:
-              #return None, HCResult.UNCORRECTABLE
+            else:
+              return tuple(d_and_p_bts[:self.data_bits]), HCResult.CORRECTED
 
         elif 1 <= syndrome_value <= self.total_bits:
             # Single-bit error detected, correctable
@@ -138,12 +145,8 @@ class HammingCode:
             error_position = syndrome_value
             # Flip the erroneous bit
             crct_bit[error_position] ^= 1
-            # Recalculate parity after correction
-            #corrected_parity = sum(crct_bit) % 2
-            #if corrected_parity == even_org_pbit:
             return tuple(crct_bit[:self.data_bits]), HCResult.CORRECTED
-            #else:
-              #return None, HCResult.UNCORRECTABLE
+
         else:
             # Multiple errors detected, uncorrectable
             return None, HCResult.UNCORRECTABLE
@@ -151,20 +154,20 @@ class HammingCode:
 
 
 
-hamming_code = HammingCode()
-print("Generator Matrix G (systematic form):")
-for row in hamming_code.g:
-    print(row)
+#hamming_code = HammingCode()
+#print("Generator Matrix G (systematic form):")
+#for row in hamming_code.g:
+    #print(row)
 
-print("\nParity-check Matrix H:")
-for row in hamming_code.h:
-    print(row)
+#print("\nParity-check Matrix H:")
+#for row in hamming_code.h:
+    #print(row)
 
 # Example data bits to test encode and decode
-test_data = (0,1,1,0,1,1)
-test_dataa2=(0,0,0,0,0,0,0,0,0,0,1)
-encoded_word = hamming_code.encode(test_data)
-decoded_word, result = hamming_code.decode(test_dataa2)
-print("Encoded word:", encoded_word)
-print("decoded word:", decoded_word,result.value)
+#test_data = (1, 0, 0, 1, 1, 0)
+#test_dataa2=(1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1)
+#encoded_word = hamming_code.encode(test_data)
+#decoded_word, result = hamming_code.decode(test_dataa2)
+#print("Encoded word:", encoded_word)
+#print("decoded word:", decoded_word,result.value)
 
